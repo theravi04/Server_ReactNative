@@ -1,0 +1,51 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// model User {
+//   id       String    @id @default(auto()) @map("_id") @db.ObjectId
+//   username String    @unique
+//   email    String    @unique
+//   password String
+//   role     String    @default("client") // can be 'client' or 'admin'
+//   wallets  Wallet[]
+//   createdAt DateTime @default(now())
+// }
+model User {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  username   String       @unique
+  email      String       @unique
+  password   String
+  role       String       @default("client") // 'client' or 'admin'
+  isActive   Boolean      @default(true)     // For account activation/deactivation
+  walletFrozen Boolean    @default(false)    // For wallet freezing/unfreezing
+  wallets    Wallet[]
+  createdAt  DateTime     @default(now())
+}
+
+model Wallet {
+  id       String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String       @db.ObjectId
+  user     User         @relation(fields: [userId], references: [id])
+  balance  Float        @default(0)
+  walletFrozen Boolean    @default(false)
+  transactions Transaction[]
+}
+
+model Transaction {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  walletId   String    @db.ObjectId
+  wallet     Wallet    @relation(fields: [walletId], references: [id])
+  type       String    // "send" or "receive"
+  amount     Float
+  category   String
+  createdAt  DateTime  @default(now())
+  recurring  Boolean   @default(false)
+  interval   String?   // e.g., 'daily', 'weekly', 'monthly'
+}
